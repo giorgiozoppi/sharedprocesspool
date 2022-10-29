@@ -7,7 +7,7 @@ import logging
 import multiprocessing
 import time
 from multiprocessing import synchronize
-from typing import Any, Callable, List
+from typing import Any, Callable, Generator, List
 
 from typing_extensions import TypeAlias
 
@@ -16,7 +16,7 @@ _LOGGER.setLevel(logging.INFO)
 _SemaphoreType: TypeAlias = synchronize.Semaphore
 
 
-class PoisonPill:
+class _PoisonPill:
     """PoisonPill is a termination token for the pool
     """
     pass
@@ -32,7 +32,7 @@ class _WorkItem:
     """
     args: Any = None
     target: Callable
-    poison: PoisonPill
+    poison: _PoisonPill
 
     def __init__(self, target, poison, /, *args):
         self.args = args
@@ -41,7 +41,12 @@ class _WorkItem:
 
 
 class Workpool:
-
+    """Class that implements a process workpool
+        trying to provide the user the max dimension of the batch.
+        When that size is reached we'll wait until the user 
+        has consumed all the data.
+        This makes sense in order to process huge amount of data.
+    """    
     def __init__(self, num_workers: int = 1, max_items=100):
         """_summary_
 
@@ -65,11 +70,7 @@ class Workpool:
             self.max_items)
 
     def __enter__(self):
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """        
+      
         self.start_time: float = time.perf_counter()
         self.process_manager.start()
         self.shallClose: bool = True
@@ -78,16 +79,6 @@ class Workpool:
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        """_summary_
-
-        Args:
-            exc_type (_type_): _description_
-            exc_value (_type_): _description_
-            tb (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """        
         if exc_type is not None:
             return False  # uncomment to pass exception through
         else:
@@ -114,28 +105,53 @@ class Workpool:
             self.started = True
         # semaphore to limit the data on the pipes and avoid broken pipes.
         self.semaphore.acquire()
+    
+    def results(self) -> Generator[Any, None, None]:
+        """Method that returns a generator for the results
+
+        Yields:
+            Any: result of the processing.
+        """        
+        if self.shallClose:
+            self.close()
+            self.shallClose = False
+        processor_finished: int = 0
+        while True:
+            new_result = self.o_queue.get()
+            if isinstance(new_result, _PoisonPill):
+                processor_finished += 1
+                if processor_finished == self.workers:
+                    self.started = False
+                    self.end_time = time.perf_counter()
+                    break
+            else:
+                yield new_result
+
 
     def close(self):
-        """_summary_
+        """Method that closes the workpool and free the resources
+           This method shall always called for making the workpool 
+           happy except when it is used as context manager.
         """        
-        for _ in range(self.workers * 2):
-            self.i_queue.put(_WorkItem(_worker_id, PoisonPill()))
+        for _ in range(self.workers):
+            self.i_queue.put(_WorkItem(_worker_id, _PoisonPill()))
         for p in self.processes:
             p.join()
 
         self.process_manager.join()
+    
 
     def completion_time(self):
-        """_summary_
+        """Method that estimate the completion time.
+            It is recommended that this method will be called 
+            after fetching the results
 
         Returns:
-            _type_: _description_
+            float: completion time of the batch in seconds
         """        
         return self.end_time - self.start_time
 
     def _start_processes(self):
-        """_summary_
-        """        
         _LOGGER.info("Start %d processes in the workpool", self.workers)
         current_args = []
         current_args.append(self.i_queue)
@@ -147,8 +163,6 @@ class Workpool:
             p.start()
 
     def _worker_wrapper(self) -> None:
-        """_summary_
-        """        
         in_queue = self.i_queue
         out_queue = self.o_queue
         stop_flag = False
@@ -164,23 +178,4 @@ class Workpool:
             out_queue.put(result)
             self.semaphore.release()
 
-    def results(self):
-        """_summary_
-
-        Yields:
-            _type_: _description_
-        """        
-        if self.shallClose:
-            self.close()
-            self.shallClose = False
-        processor_finished: int = 0
-        while True:
-            new_result = self.o_queue.get()
-            if isinstance(new_result, PoisonPill):
-                processor_finished += 1
-                if processor_finished == self.workers:
-                    self.started = False
-                    self.end_time = time.perf_counter()
-                    break
-            else:
-                yield new_result
+   
