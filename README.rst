@@ -29,8 +29,9 @@ modules:
 * Free software: MIT license
 * Documentation: https://sharedprocesspool.readthedocs.io.
 
-### Usage
-```python
+Usage
+------------
+.. code-block::python
 import hashlib
 from sharedprocesspool import Workpool
 def read_chunks() -> bytearray:
@@ -44,7 +45,8 @@ with Workpool(num_workers=1) as pool:
             pool.submit(checksum, *params)
         for result in pool.results():
             print(result)
-```
+
+::
 
 Features
 --------
