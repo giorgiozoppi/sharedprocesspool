@@ -7,8 +7,8 @@ import pytest
 from sharedprocesspool.workpool import Workpool
 
 _TMP_FILE = "/tmp/test.payload"
-_TMP_CHUNK_SIZE = 1024 * 1024
-_TMP_SIZE = 1024 * 1024 * 1
+_TMP_CHUNK_SIZE = 1024 * 1024 * 50
+_TMP_SIZE = 1024 * 1024 * 700
 _TEST_WORKERS = 5
 _TEST_BATCH_SIZE = 100
 
@@ -46,17 +46,21 @@ def test_workpool_should_be_able_to_handle_chunks(setup_teardown_workpool):
         params = tuple([chunk])
         pool.submit(checksum, *params)
     pool.close()
-
+    counter = 0
     for result in pool.results():
+        print(result)
+        counter = counter +1
         assert result[
-            0] == "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
-
+            0] == "8565a714dca840f8652c5bae9249ab05f5fb5a4f9f13fbe23304b10f68252da2"
+    assert counter == (_TMP_SIZE / _TMP_CHUNK_SIZE)
 
 def test_workpool_context_manager():
     with Workpool(_TEST_WORKERS, _TEST_BATCH_SIZE) as pool:
         for chunk in _read_chunks():
             params = tuple([chunk])
             pool.submit(checksum, *params)
+        
         for result in pool.results():
             assert result[
-                0] == "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+                0] == "8565a714dca840f8652c5bae9249ab05f5fb5a4f9f13fbe23304b10f68252da2"
+            
