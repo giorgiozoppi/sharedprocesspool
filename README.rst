@@ -29,24 +29,6 @@ modules:
 * Free software: MIT license
 * Documentation: https://sharedprocesspool.readthedocs.io.
 
-Usage
-------------
-.. code-block::python
-import hashlib
-from sharedprocesspool import Workpool
-def read_chunks() -> bytearray:
-    ........
-def checksum(data):
-     return hashlib.sha256(data).hexdigest()
-            
-with Workpool(num_workers=1) as pool:
-        for chunk in _read_chunks():
-            params = tuple([chunk])
-            pool.submit(checksum, *params)
-        for result in pool.results():
-            print(result)
-
-::
 
 Features
 --------
