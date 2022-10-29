@@ -113,10 +113,12 @@ class Workpool:
         Yields:
             Any: result of the processing.
         """
+        processor_finished: int = 0
+
         if self.shallClose:
             self.close()
             self.shallClose = False
-        processor_finished: int = 0
+
         while True:
             new_result = self.o_queue.get()
             if isinstance(new_result, _PoisonPill):
@@ -152,9 +154,6 @@ class Workpool:
 
     def _start_processes(self):
         _LOGGER.info("Start %d processes in the workpool", self.workers)
-        current_args = []
-        current_args.append(self.i_queue)
-        current_args.append(self.o_queue)
 
         for _ in range(self.workers):
             p = multiprocessing.Process(target=self._worker_wrapper())
