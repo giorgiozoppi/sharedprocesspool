@@ -43,17 +43,18 @@ class _WorkItem:
 class Workpool:
     """Class that implements a process workpool
         trying to provide the user the max dimension of the batch.
-        When that size is reached we'll wait until the user 
+        When that size is reached we'll wait until the user
         has consumed all the data.
         This makes sense in order to process huge amount of data.
-    """    
+    """
+
     def __init__(self, num_workers: int = 1, max_items=100):
         """_summary_
 
         Args:
             num_workers (int, optional): _description_. Defaults to 1.
             max_items (int, optional): _description_. Defaults to 100.
-        """        
+        """
         self.manager: Any = multiprocessing.Manager()
         self.i_queue: multiprocessing.Queue = self.manager.Queue()
         self.o_queue: multiprocessing.Queue = self.manager.Queue()
@@ -70,7 +71,7 @@ class Workpool:
             self.max_items)
 
     def __enter__(self):
-      
+
         self.start_time: float = time.perf_counter()
         self.process_manager.start()
         self.shallClose: bool = True
@@ -92,7 +93,7 @@ class Workpool:
 
         Args:
             target (Callable): _description_
-        """        
+        """
         # pickle add value to the inargs.
         self.i_queue.put(_WorkItem(target, None, *args))
 
@@ -105,13 +106,13 @@ class Workpool:
             self.started = True
         # semaphore to limit the data on the pipes and avoid broken pipes.
         self.semaphore.acquire()
-    
+
     def results(self) -> Generator[Any, None, None]:
         """Method that returns a generator for the results
 
         Yields:
             Any: result of the processing.
-        """        
+        """
         if self.shallClose:
             self.close()
             self.shallClose = False
@@ -127,28 +128,26 @@ class Workpool:
             else:
                 yield new_result
 
-
     def close(self):
         """Method that closes the workpool and free the resources
-           This method shall always called for making the workpool 
+           This method shall always called for making the workpool
            happy except when it is used as context manager.
-        """        
+        """
         for _ in range(self.workers):
             self.i_queue.put(_WorkItem(_worker_id, _PoisonPill()))
         for p in self.processes:
             p.join()
 
         self.process_manager.join()
-    
 
     def completion_time(self):
         """Method that estimate the completion time.
-            It is recommended that this method will be called 
+            It is recommended that this method will be called
             after fetching the results
 
         Returns:
             float: completion time of the batch in seconds
-        """        
+        """
         return self.end_time - self.start_time
 
     def _start_processes(self):
@@ -177,5 +176,3 @@ class Workpool:
 
             out_queue.put(result)
             self.semaphore.release()
-
-   
