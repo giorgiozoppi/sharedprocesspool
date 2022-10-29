@@ -1,5 +1,5 @@
 =================
-sharedprocesspool
+SharedProcessPool
 =================
 
 
@@ -20,7 +20,10 @@ sharedprocesspool
 
 
 
-SharedProcessPool is package that implements embarassing parallel using shared memory this will avoid pickling from input and output data.
+SharedProcessPool is package that implements embarassing parallel using shared memory this will avoid pickling from input and output data. We provide two
+modules:
+ - workpool. A pure python process pool that works in batches, tested for realibility and scalability
+ - sharedprocesspool. An efficient process pool that avoid pickling mapping input data and output in a shared memory scoreboard.
 
 
 * Free software: MIT license
