@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-
 """Tests for `sharedprocesspool` package."""
 
 import pytest
-
-from sharedprocesspool import sharedprocesspool
 
 
 @pytest.fixture

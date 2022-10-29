@@ -1,6 +1,5 @@
 import hashlib
 import os
-from typing import Any
 
 import fallocate
 import pytest
@@ -12,6 +11,7 @@ _TMP_CHUNK_SIZE = 1024 * 1024
 _TMP_SIZE = 1024 * 1024 * 1
 _TEST_WORKERS = 5
 _TEST_BATCH_SIZE = 100
+
 
 def checksum(data):
     outdata = []
@@ -48,7 +48,8 @@ def test_workpool_should_be_able_to_handle_chunks(setup_teardown_workpool):
     pool.close()
 
     for result in pool.results():
-        assert result[0] == "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
+        assert result[
+            0] == "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
 
 
 def test_workpool_context_manager():
@@ -57,5 +58,5 @@ def test_workpool_context_manager():
             params = tuple([chunk])
             pool.submit(checksum, *params)
         for result in pool.results():
-            assert result[0] == "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"
-
+            assert result[
+                0] == "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58"

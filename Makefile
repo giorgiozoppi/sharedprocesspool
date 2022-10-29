@@ -52,10 +52,11 @@ compile:
 
 lint/flake8: ## check style with flake8
 	flake8 sharedprocesspool tests
-lint/black: ## check style with black
-	black --check sharedprocesspool tests
 
-lint: lint/flake8 lint/black ## check style
+lint/yapf: ## check style with black
+	yapf -i --style google --recursive sharedprocesspool tests
+
+lint: lint/yapf lint/flake8  ## check style
 
 test: ## run tests quickly with the default Python
 	pytest
@@ -89,4 +90,4 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	python3 setup.py install
