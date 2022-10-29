@@ -34,4 +34,5 @@ Features
 --------
 
 * TODO
+The objective of this effort is to provide an efficient Python multiprocessing module with shared memory in order to minimize the number of the copies.
 

@@ -30,6 +30,11 @@ set_target_properties(
     )
 target_link_libraries(shared_queue rt)
 
+add_custom_command(TARGET shared_queue POST_BUILD
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/src/setup.py build
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Creating python shared memory queue extension"
+)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
